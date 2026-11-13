@@ -331,13 +331,12 @@ class Board:
             s = self.san(m).rstrip("+#").replace("=", "")
             if s == want:
                 return m
-        # lenient: ignore 'x' and case of piece letter / missing disambiguation
+        #lenient/missing disambiguation
         norm = lambda x: x.replace("x", "").replace("-", "")
         cands = [m for m in legal if norm(self.san(m).rstrip("+#").replace("=", "")) == norm(want)]
         if len(cands) == 1:
             return cands[0]
-        # Fallback for text copied from chess.com, where piece icons turn into nothing:
-        # e.g. "xe5", "f3" (knight), "Nbd2" -> "bd2". Match by destination square.
+        #"xe5", "f3" (knight), "Nbd2" "bd2"
         mm = re.fullmatch(r"([a-h]?[1-8]?)(x?)([a-h][1-8])(?:=?([QRBNqrbn]))?", clean)
         if mm:
             dis, is_cap, dest, promo = mm.group(1), bool(mm.group(2)), self._sqi(mm.group(3)), mm.group(4)
@@ -379,12 +378,10 @@ def split_glued(tok):
 
 
 def tokenize(text):
-    text = re.sub(r"\{[^}]*\}", " ", text)          # {comments}
-    text = re.sub(r"\([^)]*\)", " ", text)          # (variations)
-    text = re.sub(r"\[[^\]]*\]", " ", text)         # [headers]
-    text = re.sub(r"\$\d+", " ", text)              # $1 NAGs
-    # Split at move numbers (1.  12.  3...). The numbers themselves are dropped,
-    # but if they come out of order the lower number goes first.
+    text = re.sub(r"\{[^}]*\}", " ", text)          
+    text = re.sub(r"\([^)]*\)", " ", text)        
+    text = re.sub(r"\[[^\]]*\]", " ", text)       
+    text = re.sub(r"\$\d+", " ", text)         
     pieces = re.split(r"(?<![A-Za-z0-9])(\d+)\s*(\.\.\.|\.)", text)
     segs = []
     if pieces[0].strip():
@@ -535,9 +532,9 @@ def main():
     eng = Engine(exe)
     print("Engine reports:", eng.name)
     cores = os.cpu_count() or 2
-    for name, value in (("Threads", cores),            # use every CPU core
-                        ("Hash", 1024),                # 1 GB of memory for the search
-                        ("Skill Level", 20),           # maximum strength
+    for name, value in (("Threads", cores),          
+                        ("Hash", 1024),                
+                        ("Skill Level", 20),           
                         ("UCI_LimitStrength", "false"),
                         ("Ponder", "false")):
         try:
@@ -680,7 +677,7 @@ def main():
                         hints.append((t, nm, pc))
                 moves = None
                 pieces = split_glued(t)
-                if pieces:                     # e.g. 'd4d5' = two moves, d4 then d5
+                if pieces:                 
                     bb = b.copy()
                     try:
                         moves = []
@@ -701,9 +698,6 @@ def main():
         first_err = None
         done = False
         skip = False
-        # Try to continue the game; if that fails, try lining the pasted moves up
-        # with an earlier point (covers: whole game re-pasted, moves I already
-        # played pasted again, or you played something other than my suggestion).
         for cut in range(len(hist), -1, -1):
             b2 = Board(state["start_fen"])
             for m in hist[:cut]:
@@ -724,7 +718,7 @@ def main():
                 extends = added[:len(hist) - cut] == hist[cut:]
                 recent = cut >= len(hist) - 2
                 if not (extends or recent or len(added) >= 4):
-                    continue          # too risky to rewrite earlier moves from a short paste
+                    continue     
                 if not extends:
                     print("  (updated the game from move %d with what you pasted)" % (cut // 2 + 1))
             state["board"] = b2
